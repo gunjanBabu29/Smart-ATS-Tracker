@@ -163,3 +163,32 @@ if submit:
 
     else:
         st.warning("⚠️ Please upload your resume before submitting!")
+# Footer styling and content
+st.markdown(
+    """
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7); /* Dark background with slight transparency */
+            color: white;
+            font-size: 14px;
+            border-top: 1px solid #fff;
+        }
+        .footer a {
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+    <div class='footer'>
+        ©
+        <a href="https://www.linkedin.com/in/gunjan-kumar-sgv9752/" target="_blank"> 2024 | All Rights Reserved | Made By Gunjan❤️Singh | LinkedIn <br></a>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
