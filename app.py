@@ -198,7 +198,7 @@ if submit:
     else:
         st.warning("⚠️ Please upload your resume before submitting!")
 
- Footer styling and content
+ #Footer styling and content
 st.markdown(
     """
     <div class="footer">
