@@ -8,6 +8,10 @@ from PIL import Image
 import fitz  # PyMuPDF
 import plotly.graph_objects as go
 
+# Load external CSS
+with open("styles.css") as css_file:
+    st.markdown(f"<style>{css_file.read()}</style>", unsafe_allow_html=True)
+
 # Load environment variables
 load_dotenv()
 
@@ -86,10 +90,29 @@ I want the response in one single string having the structure
 """
 
 # Streamlit app UI
-st.title(                 "✨Smart ATS Tracker✨")
-st.subheader("Optimize Your Resume for ATS Systems")
-st.write(
-    "Upload your resume and paste the job description to get insights on how well your profile matches the role!"
+st.markdown(
+    """
+    <div class="main-title">✨✨✨Smart ATS Resume Tracker✨✨✨</div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Subheader with reduced size and light white color
+st.markdown(
+    """
+    <div class="subheader">Optimize Your Resume for ATS Systems</div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Description with reduced size and light white color
+st.markdown(
+    """
+    <div class="description">
+        <u class="underline">Upload your resume and paste the job description to get insights on how well your profile matches the role!</u>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 # Input fields
@@ -146,6 +169,17 @@ if submit:
             match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
             circular_progress_bar(match_percentage, 100)
 
+            # Display role status
+            st.write("🎯 **Role Status:**")
+            if 0 <= match_percentage <= 30:
+                st.write("❌ You are not eligible for this job role.")
+            elif 31 <= match_percentage <= 60:
+                st.write("⚠️ Please update your resume for this job role.")
+            elif 61 <= match_percentage <= 80:
+                st.write("✅ Good, but you need to update your resume.")
+            elif 81 <= match_percentage <= 100:
+                st.write("🎉 Congrats, you are perfect for this job role!")
+
             # Display missing keywords
             st.write("📋 **Missing Keywords:**")
             missing_keywords = response_data.get("MissingKeywords", [])
@@ -163,32 +197,13 @@ if submit:
 
     else:
         st.warning("⚠️ Please upload your resume before submitting!")
+
 # Footer styling and content
 st.markdown(
     """
-    <style>
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.7); /* Dark background with slight transparency */
-            color: white;
-            font-size: 14px;
-            border-top: 1px solid #fff;
-        }
-        .footer a {
-            color: white;
-            text-decoration: none;
-        }
-    </style>
-    <div class='footer'>
-        ©
-        <a href="https://www.linkedin.com/in/gunjan-kumar-sgv9752/" target="_blank"> 2024 | All Rights Reserved | Made By Gunjan❤️Singh | LinkedIn <br></a>
+    <div class="footer">
+        © <a href="https://www.linkedin.com/in/gunjan-kumar-sgv9752/" target="_blank"> 2024 | All Rights Reserved | Made By Gunjan❤️Singh</a>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
