@@ -55,7 +55,19 @@
     text-decoration: none;
 }
 
-/* .underline {
-    color: #ff7e5f;
+/* Blinking effect for the heart */
+.blink-heart {
+    animation: blink 1s infinite;
+}
 
-} */
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
