@@ -203,7 +203,7 @@ st.markdown(
     """
     <div class="footer">
         © <a href="https://www.linkedin.com/in/gunjan-kumar-sgv9752/" target="_blank">
-        2024 | All Rights Reserved | Made By Gunjan<span class="blink-heart">❤️</span>Singh</a>
+        2024 | All Rights Reserved | Made By Gunjan<span class="blink-heart">❤️</span>Singh | 🌐LinkedIn</a>
     </div>
     """,
     unsafe_allow_html=True,
