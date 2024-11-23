@@ -86,7 +86,7 @@ I want the response in one single string having the structure
 """
 
 # Streamlit app UI
-st.title("                  ✨Smart ATS Tracker✨")
+st.title(                 "✨Smart ATS Tracker✨")
 st.subheader("Optimize Your Resume for ATS Systems")
 st.write(
     "Upload your resume and paste the job description to get insights on how well your profile matches the role!"
