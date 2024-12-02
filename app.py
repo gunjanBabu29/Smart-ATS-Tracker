@@ -1,3 +1,4 @@
+# Import necessary libraries
 import streamlit as st
 import google.generativeai as genai
 import os
@@ -109,7 +110,7 @@ st.markdown(
 st.markdown(
     """
     <div class="description">
-        <u class="underline">Upload your resume and paste the job description to get insights on how well your profile matches the role!</u>
+        <u class="underline">Upload your resume and optionally paste the job description to get insights!</u>
     </div>
     """,
     unsafe_allow_html=True,
@@ -118,7 +119,7 @@ st.markdown(
 # Input fields
 jd = st.text_area(
     "📄 Paste the Job Description (Optional)",
-    placeholder="Enter the job description here...",
+    placeholder="Enter the job description here (optional)...",
     height=200,
 )
 uploaded_file = st.file_uploader(
@@ -145,6 +146,7 @@ submit = st.button("🚀 Evaluate My Resume")
 # Evaluation logic with caching to prevent redundant calculations
 @st.cache_data
 def evaluate_resume(jd_text, resume_text):
+    jd_text = jd_text if jd_text.strip() else "N/A"  # Handle optional JD
     formatted_prompt = input_prompt.format(text=resume_text, jd=jd_text)
     response = get_gemini_response(formatted_prompt)
     return response
@@ -198,7 +200,7 @@ if submit:
     else:
         st.warning("⚠️ Please upload your resume before submitting!")
 
- #Footer styling and content
+# Footer styling and content
 st.markdown(
     """
     <div class="footer">
