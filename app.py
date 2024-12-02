@@ -54,7 +54,7 @@ def pdf_to_image(uploaded_file):
         return None
 
 # Progress circle with only progress bar color change
-def circular_progress_bar(value, max_value):
+def circular_progress_bar(value, max_value, label):
     percentage = value / max_value * 100
 
     # Determine color for the progress bar
@@ -73,10 +73,10 @@ def circular_progress_bar(value, max_value):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=percentage,
-        title={"text": "Match %"},
+        title={"text": label},  # Dynamically set the label (ATS Score or JD Match %)
         gauge={
             "axis": {"range": [0, 100]},
-            "bar": {"color": color},  # Change only the progress bar color
+            "bar": {"color": color},  # Change the progress bar color
             "steps": [  # Keep the background consistent
                 {"range": [0, 100], "color": "#e0e0e0"}
             ],
@@ -86,7 +86,7 @@ def circular_progress_bar(value, max_value):
     st.plotly_chart(fig, use_container_width=True)
 
 # Prompt template for ATS evaluation
-input_prompt = """
+input_prompt_with_jd = """
 Hey Act Like a skilled or very experienced ATS (Application Tracking System)
 with a deep understanding of the tech field, software engineering, data science, data analytics,
 and big data engineering. Your task is to evaluate the resume based on the given job description.
@@ -99,6 +99,21 @@ description:{jd}
 
 I want the response in one single string having the structure
 {{"JD Match":"%","MissingKeywords:[]","Profile Summary":""}}
+"""
+
+input_prompt_without_jd = """
+Hey Act Like a skilled or very experienced ATS (Application Tracking System)
+with a deep understanding of the tech field, software engineering, data science, data analytics,
+and big data engineering. Your task is to evaluate the resume.
+You must provide:
+- ATS score based on the resume
+- Strong points and skills in the resume
+- Suggestions for improvements in 2-3 lines
+- A brief conclusion about the resume
+resume:{text}
+
+I want the response in one single string having the structure
+{{"ATS Score":"%","StrongPoints":[],"Suggestions":"", "Conclusion":""}}
 """
 
 # Streamlit app UI
@@ -130,7 +145,7 @@ st.markdown(
 # Input fields
 jd = st.text_area(
     "📄 Paste the Job Description (Optional)",
-    placeholder="Enter the job description here...",
+    placeholder="Enter the job description here (Optional)...",
     height=200,
 )
 uploaded_file = st.file_uploader(
@@ -158,9 +173,10 @@ submit = st.button("🚀 Evaluate My Resume")
 # Evaluation logic with caching to prevent redundant calculations
 @st.cache_data
 def evaluate_resume(jd_text, resume_text):
-    if not jd_text:
-        jd_text = "N/A"  # Default value for missing JD
-    formatted_prompt = input_prompt.format(text=resume_text, jd=jd_text)
+    if jd_text:
+        formatted_prompt = input_prompt_with_jd.format(text=resume_text, jd=jd_text)
+    else:
+        formatted_prompt = input_prompt_without_jd.format(text=resume_text)
     response = get_gemini_response(formatted_prompt)
     return response
 
@@ -179,33 +195,57 @@ if submit:
 
                     st.success("🎉 Evaluation Complete!")
                     st.subheader("💼 Your ATS Evaluation Results")
-                    
-                    # Match percentage as a progress bar
-                    match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
-                    circular_progress_bar(match_percentage, 100)
 
-                    # Display role status
-                    st.write("🎯 **Role Status:**")
-                    if 0 <= match_percentage <= 30:
-                        st.write("❌ You are not eligible for this job role.")
-                    elif 31 <= match_percentage <= 60:
-                        st.write("⚠️ Please update your resume for this job role.")
-                    elif 61 <= match_percentage <= 80:
-                        st.write("✅ Good, but you need to update your resume.")
-                    elif 81 <= match_percentage <= 100:
-                        st.write("🎉 Congrats, you are perfect for this job role!")
+                    # If JD was provided, show JD Match
+                    if jd:
+                        match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
+                        circular_progress_bar(match_percentage, 100, "JD Match %")
 
-                    # Display missing keywords
-                    st.write("📋 **Missing Keywords:**")
-                    missing_keywords = response_data.get("MissingKeywords", [])
-                    if missing_keywords:
-                        st.write(", ".join(missing_keywords))
+                        # Display role status
+                        st.write("🎯 **Role Status:**")
+                        if 0 <= match_percentage <= 30:
+                            st.write("❌ You are not eligible for this job role.")
+                        elif 31 <= match_percentage <= 60:
+                            st.write("⚠️ Please update your resume for this job role.")
+                        elif 61 <= match_percentage <= 80:
+                            st.write("✅ Good, but you need to update your resume.")
+                        elif 81 <= match_percentage <= 100:
+                            st.write("🎉 Congrats, you are perfect for this job role!")
+
+                        # Display missing keywords
+                        st.write("📋 **Missing Keywords:**")
+                        missing_keywords = response_data.get("MissingKeywords", [])
+                        if missing_keywords:
+                            st.write(", ".join(missing_keywords))
+                        else:
+                            st.write("No keywords are missing. Great job!")
+
+                        # Display profile summary
+                        st.write("📝 **Profile Summary:**")
+                        st.write(response_data.get("Profile Summary", "No summary provided."))
                     else:
-                        st.write("No keywords are missing. Great job!")
+                        ats_score = int(response_data.get("ATS Score", "0").replace("%", ""))
+                        circular_progress_bar(ats_score, 100, "ATS Score")
 
-                    # Display profile summary
-                    st.write("📝 **Profile Summary:**")
-                    st.write(response_data.get("Profile Summary", "No summary provided."))
+                        # Display ATS score
+                        st.write("📊 **ATS Score**:", ats_score)
+
+                        # Display strong points
+                        st.write("💪 **Strong Points in Resume:**")
+                        strong_points = response_data.get("StrongPoints", [])
+                        if strong_points:
+                            st.write(", ".join(strong_points))
+                        else:
+                            st.write("No strong points identified.")
+
+                        # Display suggestions
+                        st.write("💡 **Suggestions for Improvement:**")
+                        st.write(response_data.get("Suggestions", "No suggestions provided."))
+
+                        # Display conclusion
+                        st.write("📌 **Conclusion about Resume:**")
+                        st.write(response_data.get("Conclusion", "No conclusion provided."))
+
                 except json.JSONDecodeError as e:
                     st.error(f"Failed to parse the response: {str(e)}")
         else:
