@@ -1,4 +1,3 @@
-# Import necessary libraries
 import streamlit as st
 import google.generativeai as genai
 import os
@@ -21,26 +20,38 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Function to get a response from Gemini
 def get_gemini_response(input):
-    model = genai.GenerativeModel("gemini-pro")
-    response = model.generate_content(input)
-    return response.text
+    try:
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(input)
+        return response.text
+    except Exception as e:
+        st.error(f"Error communicating with the AI model: {str(e)}")
+        return None
 
 # Function to extract text from uploaded PDF
 def input_pdf_text(uploaded_file):
-    reader = pdf.PdfReader(uploaded_file)
-    text = ""
-    for page in range(len(reader.pages)):
-        page = reader.pages[page]
-        text += str(page.extract_text())
-    return text
+    try:
+        reader = pdf.PdfReader(uploaded_file)
+        text = ""
+        for page in range(len(reader.pages)):
+            page = reader.pages[page]
+            text += str(page.extract_text())
+        return text
+    except Exception as e:
+        st.error(f"Error reading the PDF file: {str(e)}")
+        return None
 
 # Function to convert the first page of the PDF to an image
 def pdf_to_image(uploaded_file):
-    doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
-    page = doc.load_page(0)  # Load the first page
-    pix = page.get_pixmap()  # Convert the page to a pixmap (image)
-    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-    return img
+    try:
+        doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+        page = doc.load_page(0)  # Load the first page
+        pix = page.get_pixmap()  # Convert the page to a pixmap (image)
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        return img
+    except Exception as e:
+        st.error(f"Error converting PDF to image: {str(e)}")
+        return None
 
 # Progress circle with only progress bar color change
 def circular_progress_bar(value, max_value):
@@ -110,7 +121,7 @@ st.markdown(
 st.markdown(
     """
     <div class="description">
-        <u class="underline">Upload your resume and optionally paste the job description to get insights!</u>
+        <u class="underline">Upload your resume and paste the job description to get insights on how well your profile matches the role!</u>
     </div>
     """,
     unsafe_allow_html=True,
@@ -119,7 +130,7 @@ st.markdown(
 # Input fields
 jd = st.text_area(
     "📄 Paste the Job Description (Optional)",
-    placeholder="Enter the job description here (optional)...",
+    placeholder="Enter the job description here...",
     height=200,
 )
 uploaded_file = st.file_uploader(
@@ -131,7 +142,8 @@ if uploaded_file is not None:
     # Show a preview of the uploaded resume
     st.write("📂 **Uploaded Resume:**")
     img = pdf_to_image(uploaded_file)
-    st.image(img, caption="Uploaded Resume (First Page)", use_column_width=True)
+    if img:
+        st.image(img, caption="Uploaded Resume (First Page)", use_column_width=True)
 
     st.download_button(
         label="📄 View/Download Uploaded Resume",
@@ -146,7 +158,8 @@ submit = st.button("🚀 Evaluate My Resume")
 # Evaluation logic with caching to prevent redundant calculations
 @st.cache_data
 def evaluate_resume(jd_text, resume_text):
-    jd_text = jd_text if jd_text.strip() else "N/A"  # Handle optional JD
+    if not jd_text:
+        jd_text = "N/A"  # Default value for missing JD
     formatted_prompt = input_prompt.format(text=resume_text, jd=jd_text)
     response = get_gemini_response(formatted_prompt)
     return response
@@ -158,45 +171,45 @@ if submit:
         text = input_pdf_text(uploaded_file)
 
         # Evaluate resume
-        response = evaluate_resume(jd, text)
+        if text:
+            response = evaluate_resume(jd, text)
+            if response:
+                try:
+                    response_data = json.loads(response)
 
-        # Parse the response (assuming it's in JSON format)
-        try:
-            response_data = json.loads(response)
+                    st.success("🎉 Evaluation Complete!")
+                    st.subheader("💼 Your ATS Evaluation Results")
+                    
+                    # Match percentage as a progress bar
+                    match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
+                    circular_progress_bar(match_percentage, 100)
 
-            st.success("🎉 Evaluation Complete!")
-            st.subheader("💼 Your ATS Evaluation Results")
-            
-            # Match percentage as a progress bar
-            match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
-            circular_progress_bar(match_percentage, 100)
+                    # Display role status
+                    st.write("🎯 **Role Status:**")
+                    if 0 <= match_percentage <= 30:
+                        st.write("❌ You are not eligible for this job role.")
+                    elif 31 <= match_percentage <= 60:
+                        st.write("⚠️ Please update your resume for this job role.")
+                    elif 61 <= match_percentage <= 80:
+                        st.write("✅ Good, but you need to update your resume.")
+                    elif 81 <= match_percentage <= 100:
+                        st.write("🎉 Congrats, you are perfect for this job role!")
 
-            # Display role status
-            st.write("🎯 **Role Status:**")
-            if 0 <= match_percentage <= 30:
-                st.write("❌ You are not eligible for this job role.")
-            elif 31 <= match_percentage <= 60:
-                st.write("⚠️ Please update your resume for this job role.")
-            elif 61 <= match_percentage <= 80:
-                st.write("✅ Good, but you need to update your resume.")
-            elif 81 <= match_percentage <= 100:
-                st.write("🎉 Congrats, you are perfect for this job role!")
+                    # Display missing keywords
+                    st.write("📋 **Missing Keywords:**")
+                    missing_keywords = response_data.get("MissingKeywords", [])
+                    if missing_keywords:
+                        st.write(", ".join(missing_keywords))
+                    else:
+                        st.write("No keywords are missing. Great job!")
 
-            # Display missing keywords
-            st.write("📋 **Missing Keywords:**")
-            missing_keywords = response_data.get("MissingKeywords", [])
-            if missing_keywords:
-                st.write(", ".join(missing_keywords))
-            else:
-                st.write("No keywords are missing. Great job!")
-
-            # Display profile summary
-            st.write("📝 **Profile Summary:**")
-            st.write(response_data.get("Profile Summary", "No summary provided."))
-
-        except json.JSONDecodeError:
-            st.error("❌ Unable to process the response. Please try again!")
-
+                    # Display profile summary
+                    st.write("📝 **Profile Summary:**")
+                    st.write(response_data.get("Profile Summary", "No summary provided."))
+                except json.JSONDecodeError as e:
+                    st.error(f"Failed to parse the response: {str(e)}")
+        else:
+            st.error("Resume text extraction failed.")
     else:
         st.warning("⚠️ Please upload your resume before submitting!")
 
