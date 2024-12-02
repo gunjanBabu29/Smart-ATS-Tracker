@@ -117,7 +117,7 @@ st.markdown(
 
 # Input fields
 jd = st.text_area(
-    "📄 Paste the Job Description",
+    "📄 Paste the Job Description (Optional)",
     placeholder="Enter the job description here...",
     height=200,
 )
