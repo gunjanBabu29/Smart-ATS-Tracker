@@ -158,7 +158,7 @@ if uploaded_file is not None:
     st.write("📂 **Uploaded Resume:**")
     img = pdf_to_image(uploaded_file)
     if img:
-        st.image(img, caption="Uploaded Resume (First Page)", use_column_width=True)
+        st.image(img, caption="Uploaded Resume (First Page)", use_container_width=True)
 
     st.download_button(
         label="📄 View/Download Uploaded Resume",
