@@ -124,6 +124,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Subheader with reduced size and light white color
 st.markdown(
     """
     <div class="subheader">Optimize Your Resume for ATS Systems</div>
@@ -131,6 +132,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Description with reduced size and light white color
 st.markdown(
     """
     <div class="description">
@@ -140,6 +142,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Input fields
 jd = st.text_area(
     "📄 Paste the Job Description (Optional)",
     placeholder="Enter the job description here (Optional)...",
@@ -149,7 +152,9 @@ uploaded_file = st.file_uploader(
     "📤 Upload Your Resume (PDF)", type="pdf", help="Upload your resume in PDF format."
 )
 
+# If a file is uploaded, display it and convert the first page to an image
 if uploaded_file is not None:
+    # Show a preview of the uploaded resume
     st.write("📂 **Uploaded Resume:**")
     img = pdf_to_image(uploaded_file)
     if img:
@@ -162,8 +167,10 @@ if uploaded_file is not None:
         mime="application/pdf",
     )
 
+# Submit button
 submit = st.button("🚀 Evaluate My Resume")
 
+# Evaluation logic with caching to prevent redundant calculations
 @st.cache_data
 def evaluate_resume(jd_text, resume_text):
     if jd_text:
@@ -173,10 +180,13 @@ def evaluate_resume(jd_text, resume_text):
     response = get_gemini_response(formatted_prompt)
     return response
 
+# Process on submit
 if submit:
     if uploaded_file is not None:
+        # Extract text from uploaded resume
         text = input_pdf_text(uploaded_file)
 
+        # Evaluate resume
         if text:
             response = evaluate_resume(jd, text)
             if response:
@@ -186,22 +196,58 @@ if submit:
                     st.success("🎉 Evaluation Complete!")
                     st.subheader("💼 Your ATS Evaluation Results")
 
+                    # If JD was provided, show JD Match
                     if jd.strip():
-                        match_percentage = response_data.get("JD Match", "0")
-                        if "/" in match_percentage:
-                            numerator, denominator = map(int, match_percentage.split("/"))
-                            match_percentage = (numerator / denominator) * 100
-                        else:
-                            match_percentage = int(match_percentage.replace("%", ""))
+                        match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
                         circular_progress_bar(match_percentage, 100, "JD Match %")
-                    else:
-                        ats_score = response_data.get("ATS Score", "0")
-                        if "/" in ats_score:
-                            numerator, denominator = map(int, ats_score.split("/"))
-                            ats_score = (numerator / denominator) * 100
+
+                        # Display role status
+                        st.write("🎯 **Role Status:**")
+                        if 0 <= match_percentage <= 30:
+                            st.write("❌ You are not eligible for this job role.")
+                        elif 31 <= match_percentage <= 60:
+                            st.write("⚠️ Please update your resume for this job role.")
+                        elif 61 <= match_percentage <= 80:
+                            st.write("✅ Good, but you need to update your resume.")
+                        elif 81 <= match_percentage <= 100:
+                            st.write("🎉 Congrats, you are perfect for this job role!")
+
+                        # Display missing keywords
+                        st.write("📋 **Missing Keywords:**")
+                        missing_keywords = response_data.get("MissingKeywords", [])
+                        if missing_keywords:
+                            st.write(", ".join(missing_keywords))
                         else:
-                            ats_score = int(ats_score.replace("%", ""))
+                            st.write("No keywords are missing. Great job!")
+
+                        # Display profile summary
+                        st.write("📝 **Profile Summary:**")
+                        st.write(response_data.get("Profile Summary", "No summary provided."))
+                    else:
+                        ats_score = int(response_data.get("ATS Score", "0").replace("%", ""))
                         circular_progress_bar(ats_score, 100, "ATS Score")
+
+                        # Display ATS score
+                        st.write("📊 **ATS Score**:", ats_score)
+
+                        # Display strong points
+                        st.write("💪 **Strong Points in Resume:**")
+        
+
+                        strong_points = response_data.get("StrongPoints", [])
+                        if strong_points:
+                            st.write(", ".join(strong_points))
+                        else:
+                            st.write("No strong points identified.")
+
+                        # Display suggestions
+                        st.write("💡 **Suggestions for Improvement:**")
+                        st.write(response_data.get("Suggestions", "No suggestions provided."))
+
+                        # Display conclusion
+                        st.write("📌 **Conclusion about Resume:**")
+                        st.write(response_data.get("Conclusion", "No conclusion provided."))
+
                 except json.JSONDecodeError as e:
                     st.error(f"Failed to parse the response: {str(e)}")
         else:
@@ -209,6 +255,7 @@ if submit:
     else:
         st.warning("⚠️ Please upload your resume before submitting!")
 
+# Footer styling and content
 st.markdown(
     """
     <div class="footer">
