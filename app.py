@@ -98,7 +98,7 @@ resume:{text}
 description:{jd}
 
 I want the response in one single string having the structure
-{{"JD Match":"%","MissingKeywords:[]","Profile Summary":""}}
+{{"JD Match":"%","MissingKeywords":[],"Profile Summary":""}}
 """
 
 input_prompt_without_jd = """
@@ -197,7 +197,7 @@ if submit:
                     st.subheader("💼 Your ATS Evaluation Results")
 
                     # If JD was provided, show JD Match
-                    if jd:
+                    if jd.strip():
                         match_percentage = int(response_data.get("JD Match", "0").replace("%", ""))
                         circular_progress_bar(match_percentage, 100, "JD Match %")
 
@@ -232,6 +232,8 @@ if submit:
 
                         # Display strong points
                         st.write("💪 **Strong Points in Resume:**")
+        
+
                         strong_points = response_data.get("StrongPoints", [])
                         if strong_points:
                             st.write(", ".join(strong_points))
