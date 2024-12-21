@@ -144,8 +144,8 @@ st.markdown(
 
 # Input fields
 jd = st.text_area(
-    "📄 Paste the Job Description (Optional)",
-    placeholder="Enter the job description here (Optional)...",
+    "📄 Paste the Job Description",
+    placeholder="Enter the job description here...",
     height=200,
 )
 uploaded_file = st.file_uploader(
