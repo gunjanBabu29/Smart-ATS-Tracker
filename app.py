@@ -7,7 +7,7 @@ import json
 from PIL import Image
 import fitz  # PyMuPDF
 import plotly.graph_objects as go
-
+#Gunjan Kumar
 # Load external CSS
 with open("styles.css") as css_file:
     st.markdown(f"<style>{css_file.read()}</style>", unsafe_allow_html=True)
