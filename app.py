@@ -22,7 +22,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # Function to get a response from Gemini
 def get_gemini_response(input_prompt):
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.6-flash")
         response = model.generate_content(input_prompt)
         return clean_json_string(response.text.strip())
     except Exception as e:
